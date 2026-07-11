@@ -1,0 +1,7 @@
+passwords/
+activity.log
+config.json
+node_modules/
+*.deb
+config.json
+*.bak

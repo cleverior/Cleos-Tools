@@ -1,0 +1,23 @@
+{
+  "name": "cleos-tools",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "cleos-tools": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
+    "figlet": "^1.11.0",
+    "inquirer": "^8.2.7",
+    "ora": "^5.4.1"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "defaultWallet": "",
+  "defaultPasswordFile": "",
+  "defaultBroadcaster": "https://vexascan.com:8443",
+  "bpMapping": {
+    "vote.arcelio": "bp.arcelio"
+  }
+}
