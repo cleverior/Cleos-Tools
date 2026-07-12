@@ -8,7 +8,8 @@ async function mainMenu() {
       message: 'Pilih Menu',
       choices: [
         { name: '1. Create Wallet', value: 'create' },
-        { name: '2. Import Existing Wallet', value: 'import' },
+        { name: '2. Open Existing Wallet', value: 'open' },
+        { name: '3. Import Existing Wallet', value: 'import' },
         { name: '3. Unlock Wallet', value: 'unlock' },
         { name: '4. Lock Wallet', value: 'lock' },
         { name: '5. Vote Block Producer', value: 'vote' },

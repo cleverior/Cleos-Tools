@@ -119,6 +119,28 @@ async function doCreate() {
   wallet.create(name);
 }
 
+function doOpen() {
+  const files = wallet.listWalletFiles();
+  if (files.length === 0) {
+    log.info('Tidak ada file wallet di ~/vex-wallet/.');
+    return;
+  }
+
+  let ok = 0;
+  for (const name of files) {
+    const r = cleos.exec(`wallet open -n ${name}`);
+    if (r.ok) ok++;
+  }
+
+  if (ok > 0) {
+    log.success(`${ok} wallet berhasil dibuka`);
+    logfile.append(`Opened ${ok} wallets`);
+  }
+  if (ok < files.length) {
+    log.warn(`${files.length - ok} wallet gagal dibuka (mungkin sudah open)`);
+  }
+}
+
 async function doImport() {
   const wallets = wallet.listWallets();
   if (wallets.length === 0) {
@@ -352,6 +374,7 @@ async function main() {
     switch (choice) {
       case 'create':    await doCreate(); break;
       case 'import':    await doImport(); break;
+      case 'open':      doOpen(); break;
       case 'unlock':    await doUnlock(); break;
       case 'lock':      await doLock(); break;
       case 'vote':      await doVote(); break;
