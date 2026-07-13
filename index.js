@@ -239,18 +239,17 @@ async function doClaim() {
   const selectedName = await promptWallet();
   if (!selectedName) return;
 
+  const bpName = selectedName;
+
   if (!health.healthCheck(cfg.defaultBroadcaster)) {
     const proceed = await confirm('Broadcaster tidak merespon. Lanjutkan?');
     if (!proceed) return;
   }
 
-  const account = await input('Nama Akun (Block Producer):');
-  if (!account) return;
-
-  const ok = await confirm(`Klaim reward untuk ${account}?`);
+  const ok = await confirm(`Klaim reward untuk ${bpName}?`);
   if (!ok) { log.info('Dibatalkan.'); return; }
 
-  rewardService.claim(selectedName, account, cfg.defaultBroadcaster);
+  rewardService.claim(selectedName, bpName, cfg.defaultBroadcaster);
 }
 
 async function doInfo() {
@@ -273,21 +272,6 @@ async function doInfo() {
   console.log(`\n${'─'.repeat(46)}`);
   log.raw(`  ${require('chalk').bold('Default Wallet')}  : ${cfg.defaultWallet || '-'}`);
   log.raw(`  ${require('chalk').bold('Broadcaster')}     : ${cfg.defaultBroadcaster}`);
-}
-
-async function doSettings() {
-  const cfg = config.load();
-  const dw = await input('Default Wallet:', cfg.defaultWallet);
-  const dp = await input('Default Password File:', cfg.defaultPasswordFile);
-  const bc = await input('Broadcaster Node URL:', cfg.defaultBroadcaster, { validate: v => !v || v.startsWith('http') || 'URL harus dimulai dengan http' });
-
-  config.save({
-    defaultWallet: dw || cfg.defaultWallet,
-    defaultPasswordFile: dp || cfg.defaultPasswordFile,
-    defaultBroadcaster: bc || cfg.defaultBroadcaster,
-    bpMapping: cfg.bpMapping,
-  });
-  log.success('Pengaturan disimpan.');
 }
 
 async function doBpMapping() {
@@ -314,6 +298,61 @@ async function doBpMapping() {
   cfg.bpMapping = mapping;
   config.save(cfg);
   log.success('BP Mapping disimpan.');
+}
+
+async function doNodes() {
+  const cfg = config.load();
+  const nodes = cfg.broadcasters || [];
+  if (nodes.length === 0) nodes.push(cfg.defaultBroadcaster);
+
+  const { action } = await $([
+    {
+      type: 'list', name: 'action', message: 'Broadcaster Nodes',
+      choices: [
+        { name: 'Tambah node', value: 'add' },
+        { name: 'Hapus node', value: 'del' },
+        { name: 'Pilih node aktif', value: 'select' },
+        { name: 'Kembali', value: 'back' },
+      ],
+    },
+  ]);
+  if (action.__esc || action === 'back') return;
+
+  if (action === 'add') {
+    const url = await input('Node URL (contoh: https://api.vexanium.com):', 'https://', { validate: v => v.startsWith('http') || 'URL harus dimulai dengan http' });
+    if (!url) return;
+    if (nodes.includes(url)) { log.warn('Node sudah ada.'); return; }
+    nodes.push(url);
+    cfg.broadcasters = nodes;
+    if (!cfg.defaultBroadcaster) cfg.defaultBroadcaster = url;
+    config.save(cfg);
+    log.success('Node ditambahkan.');
+    return;
+  }
+
+  if (action === 'del') {
+    if (nodes.length <= 1) { log.warn('Setidaknya harus ada 1 node.'); return; }
+    const { selected } = await $([
+      { type: 'list', name: 'selected', message: 'Pilih node yang akan dihapus:', choices: nodes.map(n => ({ name: n, value: n })) },
+    ]);
+    if (selected.__esc) return;
+    const filtered = nodes.filter(n => n !== selected);
+    cfg.broadcasters = filtered;
+    if (cfg.defaultBroadcaster === selected) cfg.defaultBroadcaster = filtered[0];
+    config.save(cfg);
+    log.success('Node dihapus.');
+    return;
+  }
+
+  if (action === 'select') {
+    const { selected } = await $([
+      { type: 'list', name: 'selected', message: 'Pilih node aktif:', choices: nodes.map(n => ({ name: n + (n === cfg.defaultBroadcaster ? ' ⭐' : ''), value: n })) },
+    ]);
+    if (selected.__esc) return;
+    cfg.defaultBroadcaster = selected;
+    config.save(cfg);
+    log.success(`Node aktif: ${selected}`);
+  }
 }
 
 async function doDelete() {
@@ -382,7 +421,7 @@ async function main() {
       case 'claim':     await doClaim(); break;
       case 'info':      await doInfo(); break;
       case 'bpMap':     await doBpMapping(); break;
-      case 'settings':  await doSettings(); break;
+      case 'nodes':     await doNodes(); break;
       case 'restart':
         log.raw(require('chalk').yellow('\n⚠️  PERHATIAN: Restart keosd akan menghapus semua wallet dari daftar.\n   Wallet yang sudah diimport perlu diimport ulang secara manual.\n'));
         { const ok = await confirm('Lanjutkan restart?');

@@ -7,7 +7,8 @@ const DEFAULTS = {
   defaultWallet: '',
   defaultPasswordFile: '',
   defaultBroadcaster: 'https://vexascan.com:8443',
-  bpMapping: {}, // { walletName: "bp_name", ... }
+  broadcasters: ['https://vexascan.com:8443'], // list of saved nodes
+  bpMapping: {},
 };
 
 function load() {
