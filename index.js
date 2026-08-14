@@ -4,6 +4,7 @@ const wallet = require('./src/services/wallet.service');
 const voteService = require('./src/services/vote.service');
 const rewardService = require('./src/services/reward.service');
 const rexService = require('./src/services/rex.service');
+const tokenService = require('./src/services/token.service');
 const health = require('./src/services/health.service');
 const config = require('./src/config');
 const log = require('./src/utils/logger');
@@ -502,6 +503,46 @@ async function doVexRex() {
   }
 }
 
+async function doSendToken() {
+  const cfg = config.load();
+  const selectedName = await promptWallet();
+  if (!selectedName) return;
+
+  const owner = await inputAccount('Sender Account:', selectedName);
+  if (!owner) return;
+
+  const tokens = tokenService.getTokens(owner, cfg.defaultBroadcaster);
+  if (tokens.length === 0) {
+    log.warn('Tidak ada token yang ditemukan.');
+    return;
+  }
+
+  const { token } = await $([{
+    type: 'list', name: 'token', message: 'Pilih token:',
+    choices: tokens.map(t => ({ name: `${t.amount} ${t.symbol}`, value: t }))
+  }]);
+  if (!token) return;
+
+  const to = await inputAccount('Receiver Account:');
+  if (!to) return;
+
+  const isIndodax = to === 'indodaxvexan';
+  const memo = await input(`Memo (Opsional${isIndodax ? ', WAJIB untuk Indodax' : ''}):`, '', {
+    validate: v => (!isIndodax || v.trim().length > 0) || 'Memo wajib diisi untuk Indodax'
+  });
+  if (isIndodax && !memo) return;
+
+  const amount = await input(`Jumlah (maks ${token.amount}):`, token.amount, {
+    validate: v => parseFloat(v) <= parseFloat(token.amount) || 'Melebihi saldo'
+  });
+  if (!amount) return;
+
+  const ok = await confirm(`Kirim ${amount} ${token.symbol} ke ${to}${memo ? ` (Memo: ${memo})` : ''}?`);
+  if (!ok) return;
+
+  tokenService.transfer(selectedName, owner, to, amount, token.symbol, cfg.defaultBroadcaster, memo || '');
+}
+
 // ── main loop ─────────────────────────────────────────────────────────
 
 function clearScreen() {
@@ -543,6 +584,7 @@ async function main() {
       case 'bpMap':     await doBpMapping(); break;
       case 'nodes':     await doNodes(); break;
       case 'vexrex':    await doVexRex(); break;
+      case 'send':      await doSendToken(); break;
       case 'restart':
         log.raw(require('chalk').yellow('\n⚠️  PERHATIAN: Restart keosd akan menghapus semua wallet dari daftar.\n   Wallet yang sudah diimport perlu diimport ulang secara manual.\n'));
         { const ok = await confirm('Lanjutkan restart?');
