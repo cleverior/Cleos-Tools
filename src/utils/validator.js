@@ -17,4 +17,13 @@ function fileExists(filepath) {
   return true;
 }
 
-module.exports = { notEmpty, fileExists };
+function isAccountName(value) {
+  return /^[a-z1-5.]{1,12}$/.test((value || '').trim());
+}
+
+function isAsset(value, symbol) {
+  const escaped = symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^\\d+(?:\\.\\d{4})? ${escaped}$`).test((value || '').trim());
+}
+
+module.exports = { notEmpty, fileExists, isAccountName, isAsset };

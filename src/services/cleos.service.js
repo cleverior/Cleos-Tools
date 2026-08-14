@@ -36,8 +36,8 @@ function install() {
 
 function exec(args, opts = {}) {
   // Use spawnSync so we capture both stdout and stderr (cleos writes TX IDs to stderr)
-  const parts = args.split(/\s+/);
-  const child = spawnSync(CLEOS_BIN, parts, {
+  const parts = Array.isArray(args) ? args : args.split(/\s+/);
+  const child = spawnSync(CLEOS_BIN, parts.filter(Boolean), {
     stdio: 'pipe',
     timeout: opts.timeout || 30000,
     encoding: 'utf8',

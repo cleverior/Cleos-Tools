@@ -11,6 +11,7 @@ CLI tool untuk mengelola wallet **Vexanium Block Producer** menggunakan binary `
 - **Vote Block Producer** — vote BP untuk satu wallet atau semua wallet (bulk vote)
 - **Define BP Mapping** — set target BP per wallet untuk vote all
 - **Claim Reward** — klaim reward block producer
+- **VEX REX** — unstake to REX, sell REX, withdraw REX fund, cek maturity, cek saldo withdrawable
 - **Wallet Info** — lihat status, key, dan voted BP dari semua wallet
 - **Broadcaster Nodes** — tambah, hapus, dan pilih node aktif
 - **Restart Keosd** — restart + bersihkan semua wallet & password
@@ -55,9 +56,10 @@ node index.js
 9.  Wallet Info
 10. Define BP Mapping
 11. Broadcaster Nodes
-12. Restart Keosd
-13. Delete Wallet
-14. Exit
+12. VEX REX
+13. Restart Keosd
+14. Delete Wallet
+15. Exit
 ```
 
 ## Broadcaster Nodes
@@ -87,6 +89,7 @@ cleos-tools/
 │   │   ├── wallet.service.js # CRUD wallet, unlock/lock
 │   │   ├── vote.service.js   # Vote BP
 │   │   ├── reward.service.js # Claim reward
+│   │   ├── rex.service.js    # REX actions + checks
 │   │   └── health.service.js # Broadcaster health check
 │   ├── ui/
 │   │   ├── header.js         # Banner + dashboard

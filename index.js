@@ -3,6 +3,7 @@ const cleos = require('./src/services/cleos.service');
 const wallet = require('./src/services/wallet.service');
 const voteService = require('./src/services/vote.service');
 const rewardService = require('./src/services/reward.service');
+const rexService = require('./src/services/rex.service');
 const health = require('./src/services/health.service');
 const config = require('./src/config');
 const log = require('./src/utils/logger');
@@ -109,6 +110,22 @@ async function password(msg) {
   ]);
   if (r.__esc) return null;
   return r.val ? r.val.trim() : null;
+}
+
+function accountInput(name = 'Account Name') {
+  return v => validator.isAccountName(v) || `${name} tidak valid.`;
+}
+
+function assetInput(symbol) {
+  return v => validator.isAsset(v, symbol) || `Format harus seperti 1.0000 ${symbol}`;
+}
+
+async function inputAccount(msg, def) {
+  return input(msg, def, { validate: accountInput(msg) });
+}
+
+async function inputAsset(msg, symbol, def) {
+  return input(msg, def, { validate: assetInput(symbol) });
 }
 
 // ── menu actions ──────────────────────────────────────────────────────
@@ -382,6 +399,109 @@ async function doDelete() {
   }
 }
 
+async function doUnstakeToRex() {
+  const cfg = config.load();
+  const selectedName = await promptWallet();
+  if (!selectedName) return;
+
+  if (!health.healthCheck(cfg.defaultBroadcaster)) {
+    const proceed = await confirm('Broadcaster tidak merespon. Lanjutkan?');
+    if (!proceed) return;
+  }
+
+  const owner = await inputAccount('Owner Account:', selectedName);
+  if (!owner) return;
+  const receiver = await inputAccount('Receiver Account:', owner);
+  if (!receiver) return;
+  const netAmount = await inputAsset('Jumlah NET ke REX:', 'VEX');
+  if (!netAmount) return;
+  const cpuAmount = await inputAsset('Jumlah CPU ke REX:', 'VEX');
+  if (!cpuAmount) return;
+
+  const ok = await confirm(`Unstake ke REX ${owner} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})?`);
+  if (!ok) { log.info('Dibatalkan.'); return; }
+
+  rexService.unstakeToRex(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);
+}
+
+async function doSellRex() {
+  const cfg = config.load();
+  const selectedName = await promptWallet();
+  if (!selectedName) return;
+
+  if (!health.healthCheck(cfg.defaultBroadcaster)) {
+    const proceed = await confirm('Broadcaster tidak merespon. Lanjutkan?');
+    if (!proceed) return;
+  }
+
+  const owner = await inputAccount('Owner Account:', selectedName);
+  if (!owner) return;
+  const rexAmount = await inputAsset('Jumlah REX yang dijual:', 'REX');
+  if (!rexAmount) return;
+
+  const ok = await confirm(`Jual REX ${rexAmount} dari ${owner}?`);
+  if (!ok) { log.info('Dibatalkan.'); return; }
+
+  rexService.sellRex(selectedName, owner, rexAmount, cfg.defaultBroadcaster);
+}
+
+async function doWithdrawRex() {
+  const cfg = config.load();
+  const selectedName = await promptWallet();
+  if (!selectedName) return;
+
+  if (!health.healthCheck(cfg.defaultBroadcaster)) {
+    const proceed = await confirm('Broadcaster tidak merespon. Lanjutkan?');
+    if (!proceed) return;
+  }
+
+  const owner = await inputAccount('Owner Account:', selectedName);
+  if (!owner) return;
+  const vexAmount = await inputAsset('Jumlah VEX yang diwithdraw:', 'VEX');
+  if (!vexAmount) return;
+
+  const ok = await confirm(`Withdraw ${vexAmount} dari REX fund ${owner}?`);
+  if (!ok) { log.info('Dibatalkan.'); return; }
+
+  rexService.withdrawRex(selectedName, owner, vexAmount, cfg.defaultBroadcaster);
+}
+
+async function doRexMaturity() {
+  const owner = await inputAccount('Account Name:');
+  if (!owner) return;
+  rexService.getMaturity(owner, config.load().defaultBroadcaster);
+}
+
+async function doRexWithdrawable() {
+  const owner = await inputAccount('Account Name:');
+  if (!owner) return;
+  rexService.getWithdrawable(owner, config.load().defaultBroadcaster);
+}
+
+async function doVexRex() {
+  let running = true;
+  while (running) {
+    let choice;
+    try {
+      choice = await menu.vexrexMenu();
+    } catch (e) {
+      if (e.code === 'ERR_USE_AFTER_CLOSE') return;
+      throw e;
+    }
+
+    switch (choice) {
+      case 'unstakeToRex': await doUnstakeToRex(); break;
+      case 'sellRex':      await doSellRex(); break;
+      case 'withdrawRex':  await doWithdrawRex(); break;
+      case 'maturity':     await doRexMaturity(); break;
+      case 'withdrawable': await doRexWithdrawable(); break;
+      case 'back':         running = false; continue;
+    }
+
+    if (running) await pause();
+  }
+}
+
 // ── main loop ─────────────────────────────────────────────────────────
 
 function clearScreen() {
@@ -422,6 +542,7 @@ async function main() {
       case 'info':      await doInfo(); break;
       case 'bpMap':     await doBpMapping(); break;
       case 'nodes':     await doNodes(); break;
+      case 'vexrex':    await doVexRex(); break;
       case 'restart':
         log.raw(require('chalk').yellow('\n⚠️  PERHATIAN: Restart keosd akan menghapus semua wallet dari daftar.\n   Wallet yang sudah diimport perlu diimport ulang secara manual.\n'));
         { const ok = await confirm('Lanjutkan restart?');

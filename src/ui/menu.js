@@ -18,13 +18,33 @@ async function mainMenu() {
         { name: '9. Wallet Info', value: 'info' },
         { name: '10. Define BP Mapping', value: 'bpMap' },
         { name: '11. Broadcaster Nodes', value: 'nodes' },
-        { name: '12. Restart Keosd', value: 'restart' },
-        { name: '13. Delete Wallet', value: 'delete' },
-        { name: '14. Exit', value: 'exit' },
+        { name: '12. VEX REX', value: 'vexrex' },
+        { name: '13. Restart Keosd', value: 'restart' },
+        { name: '14. Delete Wallet', value: 'delete' },
+        { name: '15. Exit', value: 'exit' },
       ],
     },
   ]);
   return choice;
 }
 
-module.exports = { mainMenu };
+async function vexrexMenu() {
+  const { choice } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'choice',
+      message: 'Menu VEX REX',
+      choices: [
+        { name: '1. Unstake to REX', value: 'unstakeToRex' },
+        { name: '2. Sell REX', value: 'sellRex' },
+        { name: '3. Withdraw REX Fund', value: 'withdrawRex' },
+        { name: '4. Cek Maturity REX', value: 'maturity' },
+        { name: '5. Cek Balance Withdrawable', value: 'withdrawable' },
+        { name: '6. Kembali', value: 'back' },
+      ],
+    },
+  ]);
+  return choice;
+}
+
+module.exports = { mainMenu, vexrexMenu };
