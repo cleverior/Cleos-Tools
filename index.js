@@ -123,7 +123,7 @@ function accountInput(name = 'Account Name') {
 function assetInput(symbol) {
   return v => {
     const parsed = validator.parseAssetInput(v, symbol);
-    return parsed || `Format harus angka (contoh: 25, 25.001, 25.0001)`;
+    return parsed ? true : `Format harus angka (contoh: 25, 25.001, 25.0001)`;
   };
 }
 
