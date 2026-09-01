@@ -508,9 +508,7 @@ async function doStake() {
   const receiver = await inputAccount('Receiver Account:', owner);
   if (!receiver) return;
   const netAmount = await inputAsset('Jumlah NET:', 'VEX');
-  if (netAmount === null) return;
   const cpuAmount = await inputAsset('Jumlah CPU:', 'VEX');
-  if (cpuAmount === null) return;
 
   const netVal = parseFloat(netAmount);
   const cpuVal = parseFloat(cpuAmount);
@@ -551,9 +549,7 @@ async function doUnstake() {
   const receiver = await inputAccount('Receiver Account:', owner);
   if (!receiver) return;
   const netAmount = await inputAsset('Jumlah NET:', 'VEX');
-  if (netAmount === null) return;
   const cpuAmount = await inputAsset('Jumlah CPU:', 'VEX');
-  if (cpuAmount === null) return;
 
   const netVal = parseFloat(netAmount);
   const cpuVal = parseFloat(cpuAmount);
