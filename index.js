@@ -99,11 +99,13 @@ async function confirm(msg) {
 
 async function input(msg, def, opts) {
   const validation = (opts && opts.validate) || (v => !!v.trim() || 'Tidak boleh kosong');
+  const filter = (opts && opts.filter) || (v => v);
   const r = await $([
-    { type: 'input', name: 'val', message: msg, default: def || '', validate: validation },
+    { type: 'input', name: 'val', message: msg, default: def || '', validate: validation, filter },
   ]);
   if (r.__esc) return null;
-  return r.val ? r.val.trim() : null;
+  const val = r.val ? r.val.trim() : '';
+  return val || null;
 }
 
 async function password(msg) {
@@ -119,7 +121,18 @@ function accountInput(name = 'Account Name') {
 }
 
 function assetInput(symbol) {
-  return v => validator.isAsset(v, symbol) || `Format harus seperti 1.0000 ${symbol}`;
+  return v => {
+    const parsed = validator.parseAssetInput(v, symbol);
+    return parsed || `Format harus angka (contoh: 25, 25.001, 25.0001)`;
+  };
+}
+
+function formatAsset(symbol) {
+  return v => {
+    const trimmed = (v || '').trim();
+    if (!trimmed) return `0.0000 ${symbol}`;
+    return validator.parseAssetInput(trimmed, symbol);
+  };
 }
 
 async function inputAccount(msg, def) {
@@ -127,7 +140,7 @@ async function inputAccount(msg, def) {
 }
 
 async function inputAsset(msg, symbol, def) {
-  return input(msg, def, { validate: assetInput(symbol) });
+  return input(msg, def, { validate: assetInput(symbol), filter: formatAsset(symbol) });
 }
 
 // ── menu actions ──────────────────────────────────────────────────────
@@ -495,11 +508,29 @@ async function doStake() {
   const receiver = await inputAccount('Receiver Account:', owner);
   if (!receiver) return;
   const netAmount = await inputAsset('Jumlah NET:', 'VEX');
-  if (!netAmount) return;
+  if (netAmount === null) return;
   const cpuAmount = await inputAsset('Jumlah CPU:', 'VEX');
-  if (!cpuAmount) return;
+  if (cpuAmount === null) return;
 
-  const ok = await confirm(`Stake ${owner} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})?`);
+  const netVal = parseFloat(netAmount);
+  const cpuVal = parseFloat(cpuAmount);
+  const hasNet = netVal > 0;
+  const hasCpu = cpuVal > 0;
+
+  let msg = `Anda akan melakukan stake`;
+  if (hasNet && hasCpu) {
+    msg += ` CPU ${cpuAmount} dan NET ${netAmount}`;
+  } else if (hasCpu) {
+    msg += ` CPU ${cpuAmount}`;
+  } else if (hasNet) {
+    msg += ` NET ${netAmount}`;
+  } else {
+    log.warn('Nominal NET dan CPU tidak boleh keduanya 0.');
+    return;
+  }
+  msg += `. Pastikan nominalnya sesuai.`;
+
+  const ok = await confirm(msg);
   if (!ok) { log.info('Dibatalkan.'); return; }
 
   resourceService.delegateBw(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);
@@ -520,11 +551,29 @@ async function doUnstake() {
   const receiver = await inputAccount('Receiver Account:', owner);
   if (!receiver) return;
   const netAmount = await inputAsset('Jumlah NET:', 'VEX');
-  if (!netAmount) return;
+  if (netAmount === null) return;
   const cpuAmount = await inputAsset('Jumlah CPU:', 'VEX');
-  if (!cpuAmount) return;
+  if (cpuAmount === null) return;
 
-  const ok = await confirm(`Unstake ${owner} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})?`);
+  const netVal = parseFloat(netAmount);
+  const cpuVal = parseFloat(cpuAmount);
+  const hasNet = netVal > 0;
+  const hasCpu = cpuVal > 0;
+
+  let msg = `Anda akan melakukan unstake`;
+  if (hasNet && hasCpu) {
+    msg += ` CPU ${cpuAmount} dan NET ${netAmount}`;
+  } else if (hasCpu) {
+    msg += ` CPU ${cpuAmount}`;
+  } else if (hasNet) {
+    msg += ` NET ${netAmount}`;
+  } else {
+    log.warn('Nominal NET dan CPU tidak boleh keduanya 0.');
+    return;
+  }
+  msg += `. Pastikan nominalnya sesuai.`;
+
+  const ok = await confirm(msg);
   if (!ok) { log.info('Dibatalkan.'); return; }
 
   resourceService.undelegateBw(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);

@@ -26,4 +26,12 @@ function isAsset(value, symbol) {
   return new RegExp(`^\\d+(?:\\.\\d{4})? ${escaped}$`).test((value || '').trim());
 }
 
-module.exports = { notEmpty, fileExists, isAccountName, isAsset };
+function parseAssetInput(value, symbol) {
+  const trimmed = (value || '').trim();
+  if (!trimmed) return `0.0000 ${symbol}`;
+  const num = parseFloat(trimmed);
+  if (isNaN(num)) return null;
+  return num.toFixed(4) + ' ' + symbol;
+}
+
+module.exports = { notEmpty, fileExists, isAccountName, isAsset, parseAssetInput };
