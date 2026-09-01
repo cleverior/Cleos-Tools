@@ -4,6 +4,10 @@ const log = require('../utils/logger');
 
 const CLEOS_BIN = 'cleos';
 
+/**
+ * Check if cleos binary is installed.
+ * @returns {boolean}
+ */
 function checkInstalled() {
   try {
     execSync('command -v cleos', { stdio: 'ignore' });
@@ -13,6 +17,10 @@ function checkInstalled() {
   }
 }
 
+/**
+ * Install cleos from Vexascan.
+ * @returns {Promise<boolean>}
+ */
 function install() {
   const spinner = ora('Menginstall cleos...').start();
   try {
@@ -34,8 +42,15 @@ function install() {
   }
 }
 
+/**
+ * Execute cleos command.
+ * Uses spawnSync to capture both stdout and stderr (cleos writes TX IDs to stderr).
+ * @param {Array<string>|string} args - Command arguments (array or space-separated string)
+ * @param {Object} opts - Options
+ * @param {number} opts.timeout - Timeout in ms (default: 30000)
+ * @returns {{ok: boolean, stdout: string, stderr: string, friendly?: string}}
+ */
 function exec(args, opts = {}) {
-  // Use spawnSync so we capture both stdout and stderr (cleos writes TX IDs to stderr)
   const parts = Array.isArray(args) ? args : args.split(/\s+/);
   const child = spawnSync(CLEOS_BIN, parts.filter(Boolean), {
     stdio: 'pipe',
@@ -55,6 +70,11 @@ function exec(args, opts = {}) {
   return { ok: false, stdout: merged, stderr, friendly };
 }
 
+/**
+ * Convert cleos stderr to user-friendly message.
+ * @param {string} stderr - Raw stderr
+ * @returns {string} - Friendly error message
+ */
 function friendlyError(stderr) {
   if (!stderr) return '';
   if (stderr.includes('password')) return 'Password salah.';
@@ -76,12 +96,20 @@ function friendlyError(stderr) {
   return stderr;
 }
 
+/**
+ * Extract transaction ID from cleos output.
+ * @param {string} stdout - cleos stdout
+ * @returns {string|null} - Transaction ID or null
+ */
 function extractTxId(stdout) {
-  // "executed transaction: <txid> ..."
   const match = stdout.match(/executed transaction:\s+([a-f0-9]+)/);
   return match ? match[1] : null;
 }
 
+/**
+ * Restart keosd and clear all wallets/passwords.
+ * @returns {boolean}
+ */
 function restartKeosd() {
   const wallet = require('./wallet.service');
   const spinner = ora('Merestart keosd...').start();

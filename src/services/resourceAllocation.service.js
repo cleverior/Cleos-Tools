@@ -1,30 +1,20 @@
-const ora = require('ora');
-const cleos = require('./cleos.service');
 const wallet = require('./wallet.service');
-const log = require('../utils/logger');
-const logfile = require('../utils/logfile');
+const { runCleos, runCleosJson } = require('../utils/cli');
 
-function formatTx(result, okMsg, logMsg) {
-  if (!result.ok) {
-    log.error(result.friendly || 'Proses gagal');
-    return false;
-  }
-
-  const txId = cleos.extractTxId(result.stdout);
-  if (txId) {
-    log.success(`Proses berhasil dengan TX ID: ${txId}`);
-  } else {
-    log.success(okMsg);
-  }
-  logfile.append(logMsg);
-  return true;
-}
-
-function delegateBw(walletName, from, receiver, netAmount, cpuAmount, broadcaster) {
+/**
+ * Delegate bandwidth (stake NET/CPU) from one account to another.
+ * @param {string} walletName - Wallet name to unlock
+ * @param {string} from - Account staking resources
+ * @param {string} receiver - Account receiving staked resources
+ * @param {string} netAmount - NET amount (e.g., "10.0000 VEX")
+ * @param {string} cpuAmount - CPU amount (e.g., "10.0000 VEX")
+ * @param {string} broadcaster - Node URL
+ * @returns {Promise<boolean>}
+ */
+async function delegateBw(walletName, from, receiver, netAmount, cpuAmount, broadcaster) {
   if (!wallet.unlock(walletName)) return false;
 
-  const spinner = ora('Stake resource (delegatebw)...').start();
-  const result = cleos.exec([
+  const result = await runCleos([
     '-u', broadcaster,
     'system', 'delegatebw',
     from,
@@ -32,17 +22,30 @@ function delegateBw(walletName, from, receiver, netAmount, cpuAmount, broadcaste
     netAmount,
     cpuAmount,
     '-p', `${from}@active`,
-  ], { timeout: 120000 });
-  spinner.stop();
+  ], {
+    actionMsg: 'Stake resource (delegatebw)...',
+    successMsg: 'Stake resource berhasil.',
+    logMsg: `Delegate BW: ${from} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})`,
+    timeout: 120000,
+  });
 
-  return formatTx(result, 'Stake resource berhasil.', `Delegate BW: ${from} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})`);
+  return result.ok;
 }
 
-function undelegateBw(walletName, from, receiver, netAmount, cpuAmount, broadcaster) {
+/**
+ * Undelegate bandwidth (unstake NET/CPU) from one account to another.
+ * @param {string} walletName - Wallet name to unlock
+ * @param {string} from - Account unstaking resources
+ * @param {string} receiver - Account receiving unstaked resources
+ * @param {string} netAmount - NET amount (e.g., "10.0000 VEX")
+ * @param {string} cpuAmount - CPU amount (e.g., "10.0000 VEX")
+ * @param {string} broadcaster - Node URL
+ * @returns {Promise<boolean>}
+ */
+async function undelegateBw(walletName, from, receiver, netAmount, cpuAmount, broadcaster) {
   if (!wallet.unlock(walletName)) return false;
 
-  const spinner = ora('Unstake resource (undelegatebw)...').start();
-  const result = cleos.exec([
+  const result = await runCleos([
     '-u', broadcaster,
     'system', 'undelegatebw',
     from,
@@ -50,29 +53,37 @@ function undelegateBw(walletName, from, receiver, netAmount, cpuAmount, broadcas
     netAmount,
     cpuAmount,
     '-p', `${from}@active`,
-  ], { timeout: 120000 });
-  spinner.stop();
+  ], {
+    actionMsg: 'Unstake resource (undelegatebw)...',
+    successMsg: 'Unstake resource berhasil.',
+    logMsg: `Undelegate BW: ${from} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})`,
+    timeout: 120000,
+  });
 
-  return formatTx(result, 'Unstake resource berhasil.', `Undelegate BW: ${from} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})`);
+  return result.ok;
 }
 
-function getStakedResources(owner, broadcaster) {
-  const spinner = ora('Mengambil data stake resource...').start();
-  const result = cleos.exec([
+/**
+ * Get staked NET and CPU resources for an account.
+ * @param {string} owner - Account owner
+ * @param {string} broadcaster - Node URL
+ * @returns {Promise<{netWeight: string, cpuWeight: string}|boolean>}
+ */
+async function getStakedResources(owner, broadcaster) {
+  const result = await runCleosJson([
     '-u', broadcaster,
     'system', 'listbw',
     owner,
     '-j',
-  ], { timeout: 30000 });
-  spinner.stop();
+  ], {
+    actionMsg: 'Mengambil data stake resource...',
+    timeout: 30000,
+  });
 
-  if (!result.ok) {
-    log.error(result.friendly || 'Gagal mengambil data stake resource');
-    return false;
-  }
+  if (!result.ok) return false;
 
   try {
-    const data = JSON.parse(result.stdout);
+    const data = result.data;
     let totalNet = 0;
     let totalCpu = 0;
     if (data.rows && Array.isArray(data.rows)) {
@@ -83,12 +94,14 @@ function getStakedResources(owner, broadcaster) {
     }
     const netWeight = totalNet.toFixed(4) + ' VEX';
     const cpuWeight = totalCpu.toFixed(4) + ' VEX';
+    const log = require('../utils/logger');
     log.raw(`\nAccount          : ${owner}`);
     log.raw(`Staked NET       : ${netWeight}`);
     log.raw(`Staked CPU       : ${cpuWeight}`);
     log.raw(`Total Staked     : ${(totalNet + totalCpu).toFixed(4)} VEX`);
     return { netWeight, cpuWeight };
   } catch (e) {
+    const log = require('../utils/logger');
     log.error(`Gagal parse data stake resource: ${e.message}`);
     return false;
   }

@@ -11,17 +11,48 @@ const DEFAULTS = {
   bpMapping: {},
 };
 
+let _cachedConfig = null;
+
+/**
+ * Load config with caching (singleton pattern).
+ * First call reads from disk, subsequent calls return cached config.
+ * @returns {Object}
+ */
 function load() {
+  if (_cachedConfig) return _cachedConfig;
+
   try {
     if (fs.existsSync(CONFIG_PATH)) {
-      return { ...DEFAULTS, ...JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')) };
+      _cachedConfig = { ...DEFAULTS, ...JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')) };
+      return _cachedConfig;
     }
   } catch (_) { /* ignore corrupt config, use defaults */ }
-  return { ...DEFAULTS };
+  _cachedConfig = { ...DEFAULTS };
+  return _cachedConfig;
 }
 
+/**
+ * Save config and update cache.
+ * @param {Object} config - Config object to save
+ */
 function save(config) {
   fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
+  _cachedConfig = { ...DEFAULTS, ...config };
 }
 
-module.exports = { load, save, CONFIG_PATH };
+/**
+ * Get current cached config (loads if not cached).
+ * @returns {Object}
+ */
+function get() {
+  return load();
+}
+
+/**
+ * Clear cache (useful for testing or after external config changes).
+ */
+function clearCache() {
+  _cachedConfig = null;
+}
+
+module.exports = { load, save, get, clearCache, CONFIG_PATH, DEFAULTS };

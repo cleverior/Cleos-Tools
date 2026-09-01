@@ -9,6 +9,10 @@ const logfile = require('../utils/logfile');
 const WALLET_DIR = path.resolve(process.env.HOME || '/root', 'vex-wallet');
 const PASS_DIR = path.resolve(__dirname, '../../passwords');
 
+/**
+ * List all wallets in vex-wallet directory with unlock status.
+ * @returns {Array<{name: string, unlocked: boolean}>}
+ */
 function listWallets() {
   const result = cleos.exec('wallet list');
   if (!result.ok) return [];
@@ -29,6 +33,11 @@ function listWallets() {
   return wallets;
 }
 
+/**
+ * Detect password file for a wallet across multiple locations.
+ * @param {string} walletName - Wallet name
+ * @returns {string|null} - Password file path or null
+ */
 function detectPasswordFile(walletName) {
   const candidates = [
     path.resolve(PASS_DIR, `${walletName}_passwd.txt`),
@@ -42,21 +51,30 @@ function detectPasswordFile(walletName) {
   return null;
 }
 
+/**
+ * Check if wallet has private keys (valid key pair format).
+ * @param {string} walletName - Wallet name
+ * @returns {boolean}
+ */
 function hasPrivateKey(walletName) {
-  // First unlock the wallet so we can check private_keys
   const passFile = detectPasswordFile(walletName);
   if (!passFile) return false;
 
   const password = fs.readFileSync(passFile, 'utf8').trim();
   const result = cleos.exec(`wallet private_keys -n ${walletName} --password ${password}`, { timeout: 10000 });
-  // Success means keys exist (output like [["PUBKEY","PVTKEY"]])
-  if (result.ok && result.stdout.includes('VEX')) return true;
+  // Check for valid key pair format: ["PUB_KEY","PRIV_KEY"] with 50+ char keys
+  if (result.ok && /"[A-Z0-9]{50,}"/.test(result.stdout)) return true;
 
   // Fallback: try unlocked path
   if (!result.ok && result.stderr.includes('Locked')) return false;
   return result.ok && result.stdout.length > 20;
 }
 
+/**
+ * Create a new wallet.
+ * @param {string} name - Wallet name
+ * @returns {Promise<boolean>}
+ */
 function create(name) {
   if (!valid.notEmpty(name, 'Nama wallet')) return false;
 
@@ -77,6 +95,12 @@ function create(name) {
   return false;
 }
 
+/**
+ * Import private key into wallet.
+ * @param {string} name - Wallet name
+ * @param {string} privateKey - Private key (WIF format)
+ * @returns {Promise<boolean>}
+ */
 function importKey(name, privateKey) {
   if (!valid.notEmpty(name, 'Nama wallet')) return false;
   if (!valid.notEmpty(privateKey, 'Private Key')) return false;
@@ -94,6 +118,12 @@ function importKey(name, privateKey) {
   return false;
 }
 
+/**
+ * Unlock a wallet.
+ * @param {string} name - Wallet name
+ * @param {string} [passFile] - Password file path (auto-detected if omitted)
+ * @returns {Promise<boolean>}
+ */
 function unlock(name, passFile) {
   const list = listWallets();
   const found = list.find(w => w.name === name);
@@ -102,7 +132,6 @@ function unlock(name, passFile) {
     return true;
   }
 
-  // auto-detect password file if not provided
   if (!passFile) passFile = detectPasswordFile(name);
   if (!passFile) {
     log.error('File password tidak ditemukan.');
@@ -124,6 +153,9 @@ function unlock(name, passFile) {
   return false;
 }
 
+/**
+ * Unlock all wallets that have password files.
+ */
 function unlockAll() {
   const list = listWallets();
   if (list.length === 0) {
@@ -137,6 +169,11 @@ function unlockAll() {
   if (ok === 0) log.error('Gagal membuka semua wallet.');
 }
 
+/**
+ * Lock a wallet.
+ * @param {string} name - Wallet name
+ * @returns {boolean}
+ */
 function lock(name) {
   const spinner = ora(`Mengunci wallet ${name}...`).start();
   const result = cleos.exec(`wallet lock -n ${name}`);
@@ -147,6 +184,9 @@ function lock(name) {
   return false;
 }
 
+/**
+ * Lock all wallets.
+ */
 function lockAll() {
   const list = listWallets();
   if (list.length === 0) {
@@ -164,6 +204,12 @@ function lockAll() {
   if (ok === 0) log.error('Gagal mengunci semua wallet.');
 }
 
+/**
+ * Get voted producer for an account.
+ * @param {string} name - Account name
+ * @param {string} broadcaster - Node URL
+ * @returns {string} - BP name or '-'
+ */
 function getVotedProducer(name, broadcaster) {
   const result = cleos.exec(`-u ${broadcaster} get table vexcore vexcore voters --lower ${name} --limit 1`);
   if (!result.ok) return '-';
@@ -176,6 +222,12 @@ function getVotedProducer(name, broadcaster) {
   return '-';
 }
 
+/**
+ * Get wallet info (status, keys, voted BP).
+ * @param {string} name - Wallet name
+ * @param {string} broadcaster - Node URL
+ * @returns {Object}
+ */
 function getInfo(name, broadcaster) {
   const list = listWallets();
   const found = list.find(w => w.name === name);
@@ -193,6 +245,10 @@ function getInfo(name, broadcaster) {
   };
 }
 
+/**
+ * List wallet files in vex-wallet directory.
+ * @returns {Array<string>} - Array of wallet names
+ */
 function listWalletFiles() {
   try {
     return fs.readdirSync(WALLET_DIR)
@@ -201,6 +257,11 @@ function listWalletFiles() {
   } catch { return []; }
 }
 
+/**
+ * Remove wallets and their password files.
+ * @param {Array<string>} names - Wallet names
+ * @returns {number} - Number of wallets removed
+ */
 function remove(names) {
   if (!names || names.length === 0) return false;
   let ok = 0;
@@ -220,6 +281,10 @@ function remove(names) {
   return ok;
 }
 
+/**
+ * Remove all wallets and password files.
+ * @returns {number} - Number of wallets removed
+ */
 function removeAll() {
   const files = listWalletFiles();
   for (const name of files) {
@@ -233,4 +298,4 @@ function removeAll() {
   return files.length;
 }
 
-module.exports = { listWallets, listWalletFiles, create, importKey, unlock, unlockAll, lock, lockAll, getInfo, getVotedProducer, detectPasswordFile, remove, removeAll };
+module.exports = { listWallets, listWalletFiles, create, importKey, unlock, unlockAll, lock, lockAll, getInfo, getVotedProducer, detectPasswordFile, remove, removeAll, hasPrivateKey };

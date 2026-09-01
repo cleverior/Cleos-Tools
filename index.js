@@ -656,8 +656,9 @@ async function doSendToken() {
   });
   if (isIndodax && !memo) return;
 
+  const tokenAmountNum = parseFloat(token.amount.split(' ')[0]);
   const amount = await input(`Jumlah (maks ${token.amount}):`, token.amount, {
-    validate: v => parseFloat(v) <= parseFloat(token.amount) || 'Melebihi saldo'
+    validate: v => parseFloat(v) <= tokenAmountNum || 'Melebihi saldo'
   });
   if (!amount) return;
 
