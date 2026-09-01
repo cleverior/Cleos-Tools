@@ -4,6 +4,7 @@ const wallet = require('./src/services/wallet.service');
 const voteService = require('./src/services/vote.service');
 const rewardService = require('./src/services/reward.service');
 const rexService = require('./src/services/rex.service');
+const resourceService = require('./src/services/resourceAllocation.service');
 const tokenService = require('./src/services/token.service');
 const health = require('./src/services/health.service');
 const config = require('./src/config');
@@ -501,7 +502,7 @@ async function doStake() {
   const ok = await confirm(`Stake ${owner} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})?`);
   if (!ok) { log.info('Dibatalkan.'); return; }
 
-  rexService.delegateBw(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);
+  resourceService.delegateBw(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);
 }
 
 async function doUnstake() {
@@ -526,13 +527,13 @@ async function doUnstake() {
   const ok = await confirm(`Unstake ${owner} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})?`);
   if (!ok) { log.info('Dibatalkan.'); return; }
 
-  rexService.undelegateBw(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);
+  resourceService.undelegateBw(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);
 }
 
 async function doStakedResources() {
   const owner = await inputAccount('Account Name:');
   if (!owner) return;
-  rexService.getStakedResources(owner, config.load().defaultBroadcaster);
+  resourceService.getStakedResources(owner, config.load().defaultBroadcaster);
 }
 
 async function doVexRex() {
