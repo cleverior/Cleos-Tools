@@ -479,6 +479,62 @@ async function doRexWithdrawable() {
   rexService.getWithdrawable(owner, config.load().defaultBroadcaster);
 }
 
+async function doStake() {
+  const cfg = config.load();
+  const selectedName = await promptWallet();
+  if (!selectedName) return;
+
+  if (!health.healthCheck(cfg.defaultBroadcaster)) {
+    const proceed = await confirm('Broadcaster tidak merespon. Lanjutkan?');
+    if (!proceed) return;
+  }
+
+  const owner = await inputAccount('Owner Account:', selectedName);
+  if (!owner) return;
+  const receiver = await inputAccount('Receiver Account:', owner);
+  if (!receiver) return;
+  const netAmount = await inputAsset('Jumlah NET:', 'VEX');
+  if (!netAmount) return;
+  const cpuAmount = await inputAsset('Jumlah CPU:', 'VEX');
+  if (!cpuAmount) return;
+
+  const ok = await confirm(`Stake ${owner} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})?`);
+  if (!ok) { log.info('Dibatalkan.'); return; }
+
+  rexService.delegateBw(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);
+}
+
+async function doUnstake() {
+  const cfg = config.load();
+  const selectedName = await promptWallet();
+  if (!selectedName) return;
+
+  if (!health.healthCheck(cfg.defaultBroadcaster)) {
+    const proceed = await confirm('Broadcaster tidak merespon. Lanjutkan?');
+    if (!proceed) return;
+  }
+
+  const owner = await inputAccount('Owner Account:', selectedName);
+  if (!owner) return;
+  const receiver = await inputAccount('Receiver Account:', owner);
+  if (!receiver) return;
+  const netAmount = await inputAsset('Jumlah NET:', 'VEX');
+  if (!netAmount) return;
+  const cpuAmount = await inputAsset('Jumlah CPU:', 'VEX');
+  if (!cpuAmount) return;
+
+  const ok = await confirm(`Unstake ${owner} -> ${receiver} (NET ${netAmount}, CPU ${cpuAmount})?`);
+  if (!ok) { log.info('Dibatalkan.'); return; }
+
+  rexService.undelegateBw(selectedName, owner, receiver, netAmount, cpuAmount, cfg.defaultBroadcaster);
+}
+
+async function doStakedResources() {
+  const owner = await inputAccount('Account Name:');
+  if (!owner) return;
+  rexService.getStakedResources(owner, config.load().defaultBroadcaster);
+}
+
 async function doVexRex() {
   let running = true;
   while (running) {
@@ -496,6 +552,28 @@ async function doVexRex() {
       case 'withdrawRex':  await doWithdrawRex(); break;
       case 'maturity':     await doRexMaturity(); break;
       case 'withdrawable': await doRexWithdrawable(); break;
+      case 'back':         running = false; continue;
+    }
+
+    if (running) await pause();
+  }
+}
+
+async function doResource() {
+  let running = true;
+  while (running) {
+    let choice;
+    try {
+      choice = await menu.resourceMenu();
+    } catch (e) {
+      if (e.code === 'ERR_USE_AFTER_CLOSE') return;
+      throw e;
+    }
+
+    switch (choice) {
+      case 'stake':        await doStake(); break;
+      case 'unstake':      await doUnstake(); break;
+      case 'staked':       await doStakedResources(); break;
       case 'back':         running = false; continue;
     }
 
@@ -584,6 +662,7 @@ async function main() {
       case 'bpMap':     await doBpMapping(); break;
       case 'nodes':     await doNodes(); break;
       case 'vexrex':    await doVexRex(); break;
+      case 'resource':  await doResource(); break;
       case 'send':      await doSendToken(); break;
       case 'restart':
         log.raw(require('chalk').yellow('\n⚠️  PERHATIAN: Restart keosd akan menghapus semua wallet dari daftar.\n   Wallet yang sudah diimport perlu diimport ulang secara manual.\n'));

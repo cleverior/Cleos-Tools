@@ -19,10 +19,11 @@ async function mainMenu() {
         { name: '10. Define BP Mapping', value: 'bpMap' },
         { name: '11. Broadcaster Nodes', value: 'nodes' },
         { name: '12. VEX REX', value: 'vexrex' },
-        { name: '13. Send Token', value: 'send' },
-        { name: '14. Restart Keosd', value: 'restart' },
-        { name: '14. Delete Wallet', value: 'delete' },
-        { name: '15. Exit', value: 'exit' },
+        { name: '13. Stake/Unstake Resource', value: 'resource' },
+        { name: '14. Send Token', value: 'send' },
+        { name: '15. Restart Keosd', value: 'restart' },
+        { name: '16. Delete Wallet', value: 'delete' },
+        { name: '17. Exit', value: 'exit' },
       ],
     },
   ]);
@@ -48,4 +49,21 @@ async function vexrexMenu() {
   return choice;
 }
 
-module.exports = { mainMenu, vexrexMenu };
+async function resourceMenu() {
+  const { choice } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'choice',
+      message: 'Menu Stake/Unstake Resource',
+      choices: [
+        { name: '1. Stake Resource (CPU/NET)', value: 'stake' },
+        { name: '2. Unstake Resource (CPU/NET)', value: 'unstake' },
+        { name: '3. Cek Stake Resource', value: 'staked' },
+        { name: '4. Kembali', value: 'back' },
+      ],
+    },
+  ]);
+  return choice;
+}
+
+module.exports = { mainMenu, vexrexMenu, resourceMenu };
