@@ -125,13 +125,6 @@ function importKey(name, privateKey) {
  * @returns {Promise<boolean>}
  */
 function unlock(name, passFile) {
-  const list = listWallets();
-  const found = list.find(w => w.name === name);
-  if (found && found.unlocked) {
-    log.info('Wallet sudah dalam keadaan unlock.');
-    return true;
-  }
-
   if (!passFile) passFile = detectPasswordFile(name);
   if (!passFile) {
     log.error('File password tidak ditemukan.');
@@ -147,6 +140,11 @@ function unlock(name, passFile) {
   if (result.ok) {
     log.success('Wallet berhasil dibuka');
     logfile.append(`Wallet unlocked: ${name}`);
+    return true;
+  }
+  // If already unlocked, cleos returns error with "already" - treat as success
+  if (result.stderr.includes('already')) {
+    log.info('Wallet sudah dalam keadaan unlock.');
     return true;
   }
   log.error(result.friendly || 'Gagal membuka wallet');

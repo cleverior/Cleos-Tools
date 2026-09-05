@@ -60,7 +60,8 @@ async function resourceMenu() {
         { name: '2. Unstake Resource (CPU/NET)', value: 'unstake' },
         { name: '3. Cek Stake Resource', value: 'staked' },
         { name: '4. Cek Status Unstake (Refund 3 Hari)', value: 'unstakeStatus' },
-        { name: '5. Kembali', value: 'back' },
+        { name: '5. Claim Refund', value: 'claimRefund' },
+        { name: '6. Kembali', value: 'back' },
       ],
     },
   ]);

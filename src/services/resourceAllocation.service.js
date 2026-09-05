@@ -117,10 +117,7 @@ async function getStakedResources(owner, broadcaster) {
 async function getUnstakeStatus(owner, broadcaster) {
   const result = await runCleosJson([
     '-u', broadcaster,
-    'get', 'table', 'vexcore', 'vexcore', 'refunds',
-    '--lower', owner,
-    '--upper', owner,
-    '--limit', '100',
+    'get', 'table', 'vexcore', owner, 'refunds',
   ], {
     actionMsg: 'Mengambil status unstake (refund)...',
     timeout: 30000,
@@ -138,7 +135,6 @@ async function getUnstakeStatus(owner, broadcaster) {
 
     if (data.rows && Array.isArray(data.rows)) {
       for (const row of data.rows) {
-        if (row.owner === owner) {
           const net = parseFloat(row.net_amount || '0');
           const cpu = parseFloat(row.cpu_amount || '0');
           const total = net + cpu;
@@ -164,7 +160,6 @@ async function getUnstakeStatus(owner, broadcaster) {
             pending.push(entry);
             totalPending += total;
           }
-        }
       }
     }
 
@@ -185,7 +180,7 @@ async function getUnstakeStatus(owner, broadcaster) {
         log.raw(`    Request: ${c.requestTime}  (${c.elapsedHours} jam lalu)`);
       }
       log.raw(`  Total Claimable: ${totalClaimable.toFixed(4)} VEX`);
-      log.raw(`  → Gunakan 'cleos system claimrewards' atau redelegate untuk claim`);
+      log.raw(`  → Gunakan menu 'Claim Refund' atau: cleos push action vexcore refund '{"owner":"<account>"}' -p <account>@active`);
     }
     if (pending.length === 0 && claimable.length === 0) {
       log.raw('Tidak ada refund pending.');
@@ -205,4 +200,30 @@ async function getUnstakeStatus(owner, broadcaster) {
   }
 }
 
-module.exports = { delegateBw, undelegateBw, getStakedResources, getUnstakeStatus };
+/**
+ * Claim unstake refund (vexcore::refund) for an account.
+ * Funds are only claimable after the 3-day / 72-hour waiting period.
+ * @param {string} walletName - Wallet name to unlock
+ * @param {string} owner - Account to claim refund for
+ * @param {string} broadcaster - Node URL
+ * @returns {Promise<boolean>}
+ */
+async function claimRefund(walletName, owner, broadcaster) {
+  if (!wallet.unlock(walletName)) return false;
+
+  const result = await runCleos([
+    '-u', broadcaster,
+    'push', 'action', 'vexcore', 'refund',
+    `{"owner":"${owner}"}`,
+    '-p', `${owner}@active`,
+  ], {
+    actionMsg: `Claim refund untuk ${owner}...`,
+    successMsg: 'Refund berhasil diklaim.',
+    logMsg: `Claim refund: ${owner}`,
+    timeout: 120000,
+  });
+
+  return result.ok;
+}
+
+module.exports = { delegateBw, undelegateBw, getStakedResources, getUnstakeStatus, claimRefund };

@@ -582,9 +582,20 @@ async function doStakedResources() {
 }
 
 async function doUnstakeStatus() {
-  const owner = await inputAccount('Account Name:');
+  const cfg = config.load();
+  const selectedName = await promptWallet();
+  const owner = await inputAccount('Account Name:', selectedName);
   if (!owner) return;
-  resourceService.getUnstakeStatus(owner, config.load().defaultBroadcaster);
+  resourceService.getUnstakeStatus(owner, cfg.defaultBroadcaster);
+}
+
+async function doClaimRefund() {
+  const cfg = config.load();
+  const selectedName = await promptWallet();
+  if (!selectedName) return;
+  const owner = await inputAccount('Owner Account:', selectedName);
+  if (!owner) return;
+  resourceService.claimRefund(selectedName, owner, cfg.defaultBroadcaster);
 }
 
 async function doVexRex() {
@@ -627,6 +638,7 @@ async function doResource() {
       case 'unstake':      await doUnstake(); break;
       case 'staked':       await doStakedResources(); break;
       case 'unstakeStatus': await doUnstakeStatus(); break;
+      case 'claimRefund':  await doClaimRefund(); break;
       case 'back':         running = false; continue;
     }
 
