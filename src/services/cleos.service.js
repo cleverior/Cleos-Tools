@@ -77,7 +77,14 @@ function exec(args, opts = {}) {
  */
 function friendlyError(stderr) {
   if (!stderr) return '';
+
+  // Extract cleos assertion message FIRST (most specific): "assertion failure with message: <msg>"
+  const match = stderr.match(/assertion failure with message: (.+?)(?:\n|$)/);
+  if (match) return match[1].trim();
+
   if (stderr.includes('password')) return 'Password salah.';
+  if (stderr.includes('Already unlocked'))
+    return 'Wallet sudah dalam keadaan unlock.';
   if (stderr.includes('Locked') || stderr.includes('lock'))
     return 'Wallet masih terkunci.';
   if (stderr.includes('Unable to connect'))
@@ -88,10 +95,6 @@ function friendlyError(stderr) {
     return 'Wallet sudah ada.';
   if (stderr.includes('Invalid'))
     return 'Input tidak valid.';
-
-  // Extract cleos assertion message: "assertion failure with message: <msg>"
-  const match = stderr.match(/assertion failure with message: (.+?)(?:\n|$)/);
-  if (match) return match[1].trim();
 
   return stderr;
 }

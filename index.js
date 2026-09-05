@@ -595,6 +595,8 @@ async function doClaimRefund() {
   if (!selectedName) return;
   const owner = await inputAccount('Owner Account:', selectedName);
   if (!owner) return;
+  const walletService = require('./src/services/wallet.service');
+  if (!walletService.unlock(selectedName)) return;
   resourceService.claimRefund(selectedName, owner, cfg.defaultBroadcaster);
 }
 

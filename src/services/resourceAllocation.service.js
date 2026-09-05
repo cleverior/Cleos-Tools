@@ -203,14 +203,13 @@ async function getUnstakeStatus(owner, broadcaster) {
 /**
  * Claim unstake refund (vexcore::refund) for an account.
  * Funds are only claimable after the 3-day / 72-hour waiting period.
- * @param {string} walletName - Wallet name to unlock
+ * Note: Wallet must be unlocked before calling this function.
+ * @param {string} walletName - Wallet name (for logging only)
  * @param {string} owner - Account to claim refund for
  * @param {string} broadcaster - Node URL
  * @returns {Promise<boolean>}
  */
 async function claimRefund(walletName, owner, broadcaster) {
-  if (!wallet.unlock(walletName)) return false;
-
   const result = await runCleos([
     '-u', broadcaster,
     'push', 'action', 'vexcore', 'refund',
