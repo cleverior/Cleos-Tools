@@ -12,7 +12,7 @@ CLI tool untuk mengelola wallet **Vexanium Block Producer** menggunakan binary `
 - **Define BP Mapping** — set target BP per wallet untuk vote all
 - **Claim Reward** — klaim reward block producer
 - **VEX REX** — unstake to REX, sell REX, withdraw REX fund, cek maturity, cek saldo withdrawable
-- **Stake/Unstake Resource** — delegate/undelegate NET & CPU bandwidth, cek staked balance
+- **Stake/Unstake Resource** — delegate/undelegate NET & CPU bandwidth, cek staked balance, cek & klaim refund unstake
 - **Send Token** — transfer VEX/token dengan memo validation (wajib untuk Indodax)
 - **Wallet Info** — lihat status, key, dan voted BP dari semua wallet
 - **Broadcaster Nodes** — tambah, hapus, dan pilih node aktif
@@ -73,7 +73,8 @@ node index.js
 2.  Unstake Resource (CPU/NET)
 3.  Cek Stake Resource
 4.  Cek Status Unstake (Refund 3 Hari)
-5.  Kembali
+5.  Claim Refund
+6.  Kembali
 ```
 
 ## Stake/Unstake Resource
@@ -96,7 +97,11 @@ Menu **Stake/Unstake Resource** (opsi 13) menyediakan:
   - Menampilkan dana yang **belum bisa claim** (kurang dari 72 jam / 3 hari)
   - Menampilkan dana yang **siap claim** (sudah lewat 72 jam / 3 hari)
   - Detail: NET, CPU, total, waktu request, jam yang sudah lewat
-  - Setelah 3 hari: gunakan `cleos system claimrewards` atau redelegate untuk claim dana
+  - Setelah 3 hari: dana bisa diklaim lewat menu **Claim Refund**
+
+- **Claim Refund** — klaim dana unstake yang sudah lewat 3 hari / 72 jam
+  - Eksekusi `vexcore::refund` (Vexanium tak punya `system claimrefund` EOSIO-style)
+  - Ditempuh manual, dana tidak otomatis cair setelah 3 hari
 
 ## VEX REX
 
