@@ -66,6 +66,16 @@ node index.js
 17. Exit
 ```
 
+### Stake/Unstake Resource Submenu (Opsi 13)
+
+```
+1.  Stake Resource (CPU/NET)
+2.  Unstake Resource (CPU/NET)
+3.  Cek Stake Resource
+4.  Cek Status Unstake (Refund 3 Hari)
+5.  Kembali
+```
+
 ## Stake/Unstake Resource
 
 Menu **Stake/Unstake Resource** (opsi 13) menyediakan:
@@ -81,6 +91,12 @@ Menu **Stake/Unstake Resource** (opsi 13) menyediakan:
   - Verifikasi nominal sebelum eksekusi
 
 - **Cek Staked Resources** — tampilkan total NET & CPU yang distake (akumulasi semua delegasi)
+
+- **Cek Status Unstake (Refund 3 Hari)** — cek status refund unstake
+  - Menampilkan dana yang **belum bisa claim** (kurang dari 72 jam / 3 hari)
+  - Menampilkan dana yang **siap claim** (sudah lewat 72 jam / 3 hari)
+  - Detail: NET, CPU, total, waktu request, jam yang sudah lewat
+  - Setelah 3 hari: gunakan `cleos system claimrewards` atau redelegate untuk claim dana
 
 ## VEX REX
 

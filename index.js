@@ -581,6 +581,12 @@ async function doStakedResources() {
   resourceService.getStakedResources(owner, config.load().defaultBroadcaster);
 }
 
+async function doUnstakeStatus() {
+  const owner = await inputAccount('Account Name:');
+  if (!owner) return;
+  resourceService.getUnstakeStatus(owner, config.load().defaultBroadcaster);
+}
+
 async function doVexRex() {
   let running = true;
   while (running) {
@@ -620,6 +626,7 @@ async function doResource() {
       case 'stake':        await doStake(); break;
       case 'unstake':      await doUnstake(); break;
       case 'staked':       await doStakedResources(); break;
+      case 'unstakeStatus': await doUnstakeStatus(); break;
       case 'back':         running = false; continue;
     }
 

@@ -107,4 +107,102 @@ async function getStakedResources(owner, broadcaster) {
   }
 }
 
-module.exports = { delegateBw, undelegateBw, getStakedResources };
+/**
+ * Check unstake refund status for an account.
+ * Returns pending refunds that are not yet claimable (within 3-day period) and claimable ones.
+ * @param {string} owner - Account owner
+ * @param {string} broadcaster - Node URL
+ * @returns {Promise<{pending: Array, claimable: Array, totalPending: string, totalClaimable: string}|boolean>}
+ */
+async function getUnstakeStatus(owner, broadcaster) {
+  const result = await runCleosJson([
+    '-u', broadcaster,
+    'get', 'table', 'vexcore', 'vexcore', 'refunds',
+    '--lower', owner,
+    '--upper', owner,
+    '--limit', '100',
+  ], {
+    actionMsg: 'Mengambil status unstake (refund)...',
+    timeout: 30000,
+  });
+
+  if (!result.ok) return false;
+
+  try {
+    const data = result.data;
+    const log = require('../utils/logger');
+    const pending = [];
+    const claimable = [];
+    let totalPending = 0;
+    let totalClaimable = 0;
+
+    if (data.rows && Array.isArray(data.rows)) {
+      for (const row of data.rows) {
+        if (row.owner === owner) {
+          const net = parseFloat(row.net_amount || '0');
+          const cpu = parseFloat(row.cpu_amount || '0');
+          const total = net + cpu;
+          const requestTime = row.request_time;
+          const now = Date.now();
+          const requestTimeMs = new Date(requestTime).getTime();
+          const elapsedHours = (now - requestTimeMs) / (1000 * 60 * 60);
+          const isClaimable = elapsedHours >= 72;
+
+          const entry = {
+            netAmount: net.toFixed(4) + ' VEX',
+            cpuAmount: cpu.toFixed(4) + ' VEX',
+            totalAmount: total.toFixed(4) + ' VEX',
+            requestTime,
+            elapsedHours: elapsedHours.toFixed(2),
+            isClaimable,
+          };
+
+          if (isClaimable) {
+            claimable.push(entry);
+            totalClaimable += total;
+          } else {
+            pending.push(entry);
+            totalPending += total;
+          }
+        }
+      }
+    }
+
+    log.raw(`\nAccount: ${owner}`);
+    log.raw(`────────────────────────────────────────`);
+    if (pending.length > 0) {
+      log.raw(`${require('chalk').yellow('⏳ Belum bisa claim (kurang dari 3 hari / 72 jam):')}`);
+      for (const p of pending) {
+        log.raw(`  NET: ${p.netAmount}  CPU: ${p.cpuAmount}  Total: ${p.totalAmount}`);
+        log.raw(`    Request: ${p.requestTime}  (${p.elapsedHours} jam lalu)`);
+      }
+      log.raw(`  Total Pending: ${totalPending.toFixed(4)} VEX`);
+    }
+    if (claimable.length > 0) {
+      log.raw(`${require('chalk').green('✅ Siap claim (sudah lewat 3 hari / 72 jam):')}`);
+      for (const c of claimable) {
+        log.raw(`  NET: ${c.netAmount}  CPU: ${c.cpuAmount}  Total: ${c.totalAmount}`);
+        log.raw(`    Request: ${c.requestTime}  (${c.elapsedHours} jam lalu)`);
+      }
+      log.raw(`  Total Claimable: ${totalClaimable.toFixed(4)} VEX`);
+      log.raw(`  → Gunakan 'cleos system claimrewards' atau redelegate untuk claim`);
+    }
+    if (pending.length === 0 && claimable.length === 0) {
+      log.raw('Tidak ada refund pending.');
+    }
+    log.raw(`────────────────────────────────────────`);
+
+    return {
+      pending,
+      claimable,
+      totalPending: totalPending.toFixed(4) + ' VEX',
+      totalClaimable: totalClaimable.toFixed(4) + ' VEX',
+    };
+  } catch (e) {
+    const log = require('../utils/logger');
+    log.error(`Gagal parse data unstake status: ${e.message}`);
+    return false;
+  }
+}
+
+module.exports = { delegateBw, undelegateBw, getStakedResources, getUnstakeStatus };
