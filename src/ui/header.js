@@ -4,12 +4,13 @@ const boxen = require('boxen');
 const config = require('../config');
 const cleos = require('../services/cleos.service');
 const walletService = require('../services/wallet.service');
+const pkg = require('../../package.json');
 
 function showBanner() {
   console.log(
     chalk.blue(figlet.textSync('Cleos Tools', { font: 'Small' }))
   );
-  console.log(chalk.dim('Vexanium Block Producer Wallet Manager\n'));
+  console.log(chalk.dim(`Vexanium Block Producer Wallet Manager  v${pkg.version}\n`));
 }
 
 function showDashboard(wallets, cfg) {
