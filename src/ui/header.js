@@ -66,7 +66,7 @@ function showDashboard(wallets, cfg) {
 
   console.log(
     boxen(
-      `  ${chalk.bold('Broadcaster')} : ${chalk.cyan(c.defaultBroadcaster || 'https://vexascan.com:8443')}`,
+      `  ${chalk.bold('Broadcaster')} : ${chalk.cyan(c.defaultBroadcaster || 'https://vexascan.com:8443')}    ${chalk.dim(`v${pkg.version}`)}`,
       { padding: { top: 0, bottom: 0, left: 2, right: 2 }, borderStyle: 'round', borderColor: 'cyan' }
     )
   );
