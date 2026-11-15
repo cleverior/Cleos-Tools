@@ -56,6 +56,13 @@ function showDashboard(wallets, cfg) {
     lines.push(chalk.dim('  (belum ada wallet)'));
   }
 
+  console.log(
+    boxen(
+      `  ${chalk.bold('Cleos-tools version')} : ${chalk.cyan(`v${pkg.version}`)}`,
+      { padding: { top: 0, bottom: 0, left: 2, right: 2 }, borderStyle: 'round', borderColor: 'cyan' }
+    )
+  );
+
   console.log(boxen(lines.join('\n'), {
     padding: { top: 1, bottom: 1, left: 2, right: 2 },
     borderStyle: 'round',
@@ -66,7 +73,7 @@ function showDashboard(wallets, cfg) {
 
   console.log(
     boxen(
-      `  ${chalk.bold('Broadcaster')} : ${chalk.cyan(c.defaultBroadcaster || 'https://vexascan.com:8443')}    ${chalk.dim(`v${pkg.version}`)}`,
+      `  ${chalk.bold('Broadcaster')} : ${chalk.cyan(c.defaultBroadcaster || 'https://vexascan.com:8443')}`,
       { padding: { top: 0, bottom: 0, left: 2, right: 2 }, borderStyle: 'round', borderColor: 'cyan' }
     )
   );
