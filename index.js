@@ -262,7 +262,7 @@ async function doVote() {
     if (!proceed) return;
   }
 
-  const voter = await input('Voter Account:');
+  const voter = await input('Voter Account:', selectedName);
   if (!voter) return;
   const bpName = await input('Nama Block Producer:');
   if (!bpName) return;
