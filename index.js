@@ -25,14 +25,41 @@ RL.createInterface = function (opts) {
   return activeRl;
 };
 
+let autoSubmitDigits = false;
+
 if (process.stdin.isTTY) {
   RL.emitKeypressEvents(process.stdin);
   process.stdin.setRawMode(true);
+
+  let digitTimer = null;
+  let digitBuf = '';
+
   process.stdin.on('keypress', (str, key) => {
+    // ESC: close active prompt
     if (key && key.name === 'escape' && activeRl) {
+      if (digitTimer) { clearTimeout(digitTimer); digitTimer = null; }
+      digitBuf = '';
       const rl = activeRl;
       activeRl = null;
       rl.close(); // triggers prompt rejection → caught by escPrompt
+      return;
+    }
+
+    // Digit keys: auto-submit for main menu numbered selection (no Enter needed)
+    if (autoSubmitDigits && activeRl && str && /^[0-9]$/.test(str) && !key.ctrl && !key.meta) {
+      digitBuf += str;
+      if (digitTimer) clearTimeout(digitTimer);
+      // Delay allows multi-digit input (e.g. "17") before auto-submit
+      digitTimer = setTimeout(() => {
+        digitTimer = null;
+        digitBuf = '';
+        try { activeRl.write('\n'); } catch (_) { /* ignore */ }
+      }, 450);
+    } else if (digitTimer) {
+      // Any other keypress cancels pending auto-submit
+      clearTimeout(digitTimer);
+      digitTimer = null;
+      digitBuf = '';
     }
   });
 }
@@ -83,7 +110,7 @@ async function promptWallet(allowNone = false) {
   if (allowNone) choices.unshift({ name: '(kembali)', value: null });
 
   const { selected } = await $([
-    { type: 'list', name: 'selected', message: 'Pilih wallet', choices },
+    { type: 'rawlist', name: 'selected', message: 'Pilih wallet', choices },
   ]);
   if (selected && selected.__esc) return null;
   return selected;
@@ -154,7 +181,7 @@ async function doCreate() {
 function doOpen() {
   const files = wallet.listWalletFiles();
   if (files.length === 0) {
-    log.info('Tidak ada file wallet di ~/vex-wallet/.');
+    log.info(`Tidak ada file wallet di ${wallet.WALLET_DIR}/.`);
     return;
   }
 
@@ -196,7 +223,7 @@ async function doUnlock() {
 
   const { mode } = await $([
     {
-      type: 'list', name: 'mode', message: 'Pilih mode unlock:',
+      type: 'rawlist', name: 'mode', message: 'Pilih mode unlock:',
       choices: [
         { name: 'Unlock satu wallet', value: 'single' },
         { name: 'Unlock semua wallet', value: 'all' },
@@ -339,7 +366,7 @@ async function doNodes() {
 
   const { action } = await $([
     {
-      type: 'list', name: 'action', message: 'Broadcaster Nodes',
+      type: 'rawlist', name: 'action', message: 'Broadcaster Nodes',
       choices: [
         { name: 'Tambah node', value: 'add' },
         { name: 'Hapus node', value: 'del' },
@@ -365,7 +392,7 @@ async function doNodes() {
   if (action === 'del') {
     if (nodes.length <= 1) { log.warn('Setidaknya harus ada 1 node.'); return; }
     const { selected } = await $([
-      { type: 'list', name: 'selected', message: 'Pilih node yang akan dihapus:', choices: nodes.map(n => ({ name: n, value: n })) },
+      { type: 'rawlist', name: 'selected', message: 'Pilih node yang akan dihapus:', choices: nodes.map(n => ({ name: n, value: n })) },
     ]);
     if (selected.__esc) return;
     const filtered = nodes.filter(n => n !== selected);
@@ -378,7 +405,7 @@ async function doNodes() {
 
   if (action === 'select') {
     const { selected } = await $([
-      { type: 'list', name: 'selected', message: 'Pilih node aktif:', choices: nodes.map(n => ({ name: n + (n === cfg.defaultBroadcaster ? ' ⭐' : ''), value: n })) },
+      { type: 'rawlist', name: 'selected', message: 'Pilih node aktif:', choices: nodes.map(n => ({ name: n + (n === cfg.defaultBroadcaster ? ' ⭐' : ''), value: n })) },
     ]);
     if (selected.__esc) return;
     cfg.defaultBroadcaster = selected;
@@ -663,7 +690,7 @@ async function doSendToken() {
   }
 
   const { token } = await $([{
-    type: 'list', name: 'token', message: 'Pilih token:',
+    type: 'rawlist', name: 'token', message: 'Pilih token:',
     choices: tokens.map(t => ({ name: `${t.amount} ${t.symbol}`, value: t }))
   }]);
   if (!token) return;
@@ -712,10 +739,13 @@ async function main() {
 
     let choice;
     try {
+      autoSubmitDigits = true;
       choice = await menu.mainMenu();
     } catch (e) {
       if (e.code === 'ERR_USE_AFTER_CLOSE') break;
       throw e;
+    } finally {
+      autoSubmitDigits = false;
     }
     switch (choice) {
       case 'create':    await doCreate(); break;

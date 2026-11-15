@@ -5,7 +5,7 @@ CLI tool untuk mengelola wallet **Vexanium Block Producer** menggunakan binary `
 ## Fitur
 
 - **Create Wallet** — buat wallet baru, password otomatis tersimpan
-- **Open Existing Wallet** — buka semua file `*.wallet` dari `~/vex-wallet/`
+- **Open Existing Wallet** — buka semua file `*.wallet` dari `$HOME/vex-wallet` (direktori wallet sesuai user yang menjalankan, mis. `/data/vex-wallet`)
 - **Import Wallet** — import private key ke wallet
 - **Unlock / Lock Wallet** — unlock satu atau semua wallet
 - **Vote Block Producer** — vote BP untuk satu wallet atau semua wallet (bulk vote)

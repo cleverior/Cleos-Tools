@@ -296,4 +296,4 @@ function removeAll() {
   return files.length;
 }
 
-module.exports = { listWallets, listWalletFiles, create, importKey, unlock, unlockAll, lock, lockAll, getInfo, getVotedProducer, detectPasswordFile, remove, removeAll, hasPrivateKey };
+module.exports = { listWallets, listWalletFiles, create, importKey, unlock, unlockAll, lock, lockAll, getInfo, getVotedProducer, detectPasswordFile, remove, removeAll, hasPrivateKey, WALLET_DIR };

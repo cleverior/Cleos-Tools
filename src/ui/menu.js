@@ -3,27 +3,27 @@ const inquirer = require('inquirer');
 async function mainMenu() {
   const { choice } = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'rawlist',
       name: 'choice',
       message: 'Pilih Menu',
       choices: [
-        { name: '1. Create Wallet', value: 'create' },
-        { name: '2. Open Existing Wallet', value: 'open' },
-        { name: '3. Import Existing Wallet', value: 'import' },
-        { name: '4. Unlock Wallet', value: 'unlock' },
-        { name: '5. Lock Wallet', value: 'lock' },
-        { name: '6. Vote Block Producer', value: 'vote' },
-        { name: '7. Vote All Wallets', value: 'voteAll' },
-        { name: '8. Claim Reward', value: 'claim' },
-        { name: '9. Wallet Info', value: 'info' },
-        { name: '10. Define BP Mapping', value: 'bpMap' },
-        { name: '11. Broadcaster Nodes', value: 'nodes' },
-        { name: '12. VEX REX', value: 'vexrex' },
-        { name: '13. Stake/Unstake Resource', value: 'resource' },
-        { name: '14. Send Token', value: 'send' },
-        { name: '15. Restart Keosd', value: 'restart' },
-        { name: '16. Delete Wallet', value: 'delete' },
-        { name: '17. Exit', value: 'exit' },
+        { name: 'Create Wallet', value: 'create' },
+        { name: 'Open Existing Wallet', value: 'open' },
+        { name: 'Import Existing Wallet', value: 'import' },
+        { name: 'Unlock Wallet', value: 'unlock' },
+        { name: 'Lock Wallet', value: 'lock' },
+        { name: 'Vote Block Producer', value: 'vote' },
+        { name: 'Vote All Wallets', value: 'voteAll' },
+        { name: 'Claim Reward', value: 'claim' },
+        { name: 'Wallet Info', value: 'info' },
+        { name: 'Define BP Mapping', value: 'bpMap' },
+        { name: 'Broadcaster Nodes', value: 'nodes' },
+        { name: 'VEX REX', value: 'vexrex' },
+        { name: 'Stake/Unstake Resource', value: 'resource' },
+        { name: 'Send Token', value: 'send' },
+        { name: 'Restart Keosd', value: 'restart' },
+        { name: 'Delete Wallet', value: 'delete' },
+        { name: 'Exit', value: 'exit' },
       ],
     },
   ]);
@@ -33,16 +33,16 @@ async function mainMenu() {
 async function vexrexMenu() {
   const { choice } = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'rawlist',
       name: 'choice',
       message: 'Menu VEX REX',
       choices: [
-        { name: '1. Unstake to REX', value: 'unstakeToRex' },
-        { name: '2. Sell REX', value: 'sellRex' },
-        { name: '3. Withdraw REX Fund', value: 'withdrawRex' },
-        { name: '4. Cek Maturity REX', value: 'maturity' },
-        { name: '5. Cek Balance Withdrawable', value: 'withdrawable' },
-        { name: '6. Kembali', value: 'back' },
+        { name: 'Unstake to REX', value: 'unstakeToRex' },
+        { name: 'Sell REX', value: 'sellRex' },
+        { name: 'Withdraw REX Fund', value: 'withdrawRex' },
+        { name: 'Cek Maturity REX', value: 'maturity' },
+        { name: 'Cek Balance Withdrawable', value: 'withdrawable' },
+        { name: 'Kembali', value: 'back' },
       ],
     },
   ]);
@@ -52,16 +52,16 @@ async function vexrexMenu() {
 async function resourceMenu() {
   const { choice } = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'rawlist',
       name: 'choice',
       message: 'Menu Stake/Unstake Resource',
       choices: [
-        { name: '1. Stake Resource (CPU/NET)', value: 'stake' },
-        { name: '2. Unstake Resource (CPU/NET)', value: 'unstake' },
-        { name: '3. Cek Stake Resource', value: 'staked' },
-        { name: '4. Cek Status Unstake (Refund 3 Hari)', value: 'unstakeStatus' },
-        { name: '5. Claim Refund', value: 'claimRefund' },
-        { name: '6. Kembali', value: 'back' },
+        { name: 'Stake Resource (CPU/NET)', value: 'stake' },
+        { name: 'Unstake Resource (CPU/NET)', value: 'unstake' },
+        { name: 'Cek Stake Resource', value: 'staked' },
+        { name: 'Cek Status Unstake (Refund 3 Hari)', value: 'unstakeStatus' },
+        { name: 'Claim Refund', value: 'claimRefund' },
+        { name: 'Kembali', value: 'back' },
       ],
     },
   ]);
